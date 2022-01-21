@@ -8,6 +8,19 @@ from utils import prob_dist
 
 
 class VQA:
+    
+    """ VQA is a variational quantum algorithm that trains a quantum circuit to create a quantum state that yields the desired probability distribution.
+    
+    Attributes: 
+        target_distr(list): A list that represents the desired probability distribution
+        gate(string): A string that represents the type of gates used in the ansatz. Can either be "RYRZ" or "U3".
+        layers(int): An integer that represents how many layers of rotation gates and entanglement gates are applied. 
+        entanglement(string): A string that represents how the entanglement gates are applied. Can either be "Linear" or "Full".
+        optimizer(object): Use a classical optimizer from Qiskit such as COBYLA
+        shots(integer): The number of shots you want to use for each circuit. Need more shots when using more qubits.
+        backend(object): Use a Qiskit backend such as 'qasm_simulator'.
+        n(integer): The number of qubits needed
+    """
 
     def __init__(self, target_distribution, optimizer, backend, gate = "U3", layers = 4, entanglement = "Linear", shots = 1024):
         
@@ -33,6 +46,8 @@ class VQA:
         
     def Ansatz(self):
     
+        """Creates the paramterized ansatz quantum circuit"""
+        
         qr = QuantumRegister(self.n)
         cr = ClassicalRegister(self.n)
         qc = QuantumCircuit(qr, cr)
@@ -127,7 +142,9 @@ class VQA:
     
     
     def objective_function(self, params):
-            
+        
+        """Calls Ansatz to create a quantum circuit with updated paramters from the classical optimizer. Runs the cirucit and calculates the cost function to be sent to the classical optimizer."""
+        
         qc = self.Ansatz()
         t_qc = transpile(qc, self.backend)
         qobj = assemble(t_qc, shots = self.shots)
@@ -166,6 +183,8 @@ class VQA:
         return cost
     
     def find_target_distribution(self):
+        
+        """Calls objective function to keep finding new and better parameters until a satisfactory set of parameters have been found."""
         
         ret = self.optimizer.optimize(num_vars = len(self.params), objective_function = self.objective_function, initial_point = self.params)
         
@@ -206,7 +225,9 @@ class VQA:
 # Creates keys for target dictionary that so that it matches with keys of output distribution (EX: 10 -> 010 for a 3 qubit system)
 
     def plot(self):
-        
+    
+    """Plot histogram comparing the probability distribution found by the VQA to the desired probability distribution."""
+    
         number = []
         for i in range(len(self.target_distr)):
             binary = format(i, "b") # converts decimal to binary
